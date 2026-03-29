@@ -6,7 +6,6 @@
 package org.lineageos.twelve.viewmodels
 
 import android.app.Application
-import android.os.Bundle
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
@@ -58,8 +57,6 @@ import org.lineageos.twelve.models.PlaybackProgress
 import org.lineageos.twelve.models.PlaybackState
 import org.lineageos.twelve.models.RepeatMode
 import org.lineageos.twelve.models.Result
-import org.lineageos.twelve.services.PlaybackService
-import org.lineageos.twelve.services.PlaybackService.CustomCommand.Companion.sendCustomCommand
 import org.lineageos.twelve.utils.MimeUtils
 import org.lineageos.twelve.utils.OutputConfigurationUtils
 import org.lineageos.twelve.utils.OutputConfigurationUtils.toModel
@@ -305,21 +302,6 @@ open class NowPlayingViewModel(application: Application) : TwelveViewModel(appli
             viewModelScope,
             started = SharingStarted.WhileSubscribed(),
             initialValue = PlaybackProgress.EMPTY
-        )
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val audioSessionId = mediaControllerFlow
-        .mapLatest { mediaController ->
-            mediaController.sendCustomCommand(
-                PlaybackService.CustomCommand.GET_AUDIO_SESSION_ID,
-                Bundle.EMPTY
-            ).extras.getInt(PlaybackService.CustomCommand.RSP_VALUE)
-        }
-        .flowOn(Dispatchers.Main)
-        .stateIn(
-            viewModelScope,
-            started = SharingStarted.WhileSubscribed(),
-            initialValue = null
         )
 
     private val _currentVisualizerType = MutableStateFlow(VisualizerType.entries.first())

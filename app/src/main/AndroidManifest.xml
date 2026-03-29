@@ -19,6 +19,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <application
         android:name=".TwelveApplication"
@@ -59,6 +60,12 @@
                 <!--<data android:mimeType="vnd.android.cursor.item/playlist" />-->
 
                 <data android:scheme="content" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.media.action.DISPLAY_AUDIO_EFFECT_CONTROL_PANEL" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.CONTENT_DIRECTORY" />
             </intent-filter>
 
         </activity>

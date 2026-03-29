@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     SPDX-FileCopyrightText: 2024 The LineageOS Project
+     SPDX-FileCopyrightText: 2024-2026 The LineageOS Project
      SPDX-License-Identifier: Apache-2.0
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
@@ -22,6 +22,12 @@
         android:id="@+id/libraryFragment"
         android:icon="@drawable/ic_lineage_library"
         android:title="@string/main_fragment_section_library"
+        app:tint="?attr/colorOnSurface" />
+
+    <item
+        android:id="@+id/equalizerFragment"
+        android:icon="@drawable/ic_audiofx"
+        android:title="@string/equalizer"
         app:tint="?attr/colorOnSurface" />
 
 </menu>

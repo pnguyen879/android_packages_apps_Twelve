@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     SPDX-FileCopyrightText: 2024-2025 The LineageOS Project
+     SPDX-FileCopyrightText: 2024-2026 The LineageOS Project
      SPDX-License-Identifier: Apache-2.0
 -->
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
@@ -9,10 +9,16 @@
     android:id="@+id/fragment_now_playing"
     app:startDestination="@id/nowPlayingFragment">
 
+    <include app:graph="@navigation/fragment_equalizer" />
+
     <fragment
         android:id="@+id/nowPlayingFragment"
         android:name="org.lineageos.twelve.fragments.NowPlayingFragment"
         tools:layout="@layout/fragment_now_playing">
+
+        <action
+            android:id="@+id/action_nowPlayingFragment_to_fragment_equalizer"
+            app:destination="@+id/fragment_equalizer" />
 
         <action
             android:id="@+id/action_nowPlayingFragment_to_fragment_lyrics"

@@ -1,16 +1,14 @@
 /*
- * SPDX-FileCopyrightText: 2024-2025 The LineageOS Project
+ * SPDX-FileCopyrightText: 2024-2026 The LineageOS Project
  * SPDX-License-Identifier: Apache-2.0
  */
 
 package org.lineageos.twelve.fragments
 
 import android.animation.ValueAnimator
-import android.content.Intent
 import android.graphics.PixelFormat
 import android.icu.text.DecimalFormat
 import android.icu.text.DecimalFormatSymbols
-import android.media.audiofx.AudioEffect
 import android.os.Bundle
 import android.util.Log
 import android.view.SurfaceView
@@ -18,7 +16,6 @@ import android.view.View
 import android.view.animation.LinearInterpolator
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -106,12 +103,6 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing) {
     // Progress slider state
     private var isProgressSliderDragging = false
     private var animator: ValueAnimator? = null
-
-    // AudioFX
-    private val audioEffectsStartForResult =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            // Empty
-        }
 
     // Visualizer
     private val visualizerManager = NierVisualizerManager()
@@ -250,17 +241,9 @@ class NowPlayingFragment : Fragment(R.layout.fragment_now_playing) {
         }
 
         equalizerMaterialButton.setOnClickListener {
-            // Open system equalizer
-            viewModel.audioSessionId.value?.let { audioSessionId ->
-                audioEffectsStartForResult.launch(
-                    Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).apply {
-                        putExtra(AudioEffect.EXTRA_PACKAGE_NAME, requireContext().packageName)
-                        putExtra(AudioEffect.EXTRA_AUDIO_SESSION, audioSessionId)
-                        putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
-                    },
-                    null
-                )
-            }
+            findNavController().navigateSafe(
+                R.id.action_nowPlayingFragment_to_fragment_equalizer
+            )
         }
 
         visualizerMaterialButton.setOnClickListener {

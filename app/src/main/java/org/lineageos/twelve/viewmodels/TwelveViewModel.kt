@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2024-2025 The LineageOS Project
+ * SPDX-FileCopyrightText: 2024-2026 The LineageOS Project
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -7,6 +7,7 @@ package org.lineageos.twelve.viewmodels
 
 import android.app.Application
 import android.content.ComponentName
+import android.os.Bundle
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.session.MediaController
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.guava.await
@@ -31,6 +33,7 @@ import org.lineageos.twelve.ext.typedRepeatMode
 import org.lineageos.twelve.models.Audio
 import org.lineageos.twelve.models.RepeatMode
 import org.lineageos.twelve.services.PlaybackService
+import org.lineageos.twelve.services.PlaybackService.CustomCommand.Companion.sendCustomCommand
 
 /**
  * Base view model for all app view models.
@@ -89,6 +92,21 @@ abstract class TwelveViewModel(application: Application) : AndroidViewModel(appl
             viewModelScope,
             SharingStarted.Eagerly,
             replay = 1
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val audioSessionId = mediaControllerFlow
+        .mapLatest { mediaController ->
+            mediaController.sendCustomCommand(
+                PlaybackService.CustomCommand.GET_AUDIO_SESSION_ID,
+                Bundle.EMPTY
+            ).extras.getInt(PlaybackService.CustomCommand.RSP_VALUE)
+        }
+        .flowOn(Dispatchers.Main)
+        .stateIn(
+            viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = null
         )
 
     protected var shuffleModeEnabled: Boolean

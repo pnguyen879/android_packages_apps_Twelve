@@ -289,16 +289,16 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                     searchView.startBackProgress(backEvent)
                 }
 
-                override fun handleOnBackProgressed(backEvent: BackEventCompat) {
-                    searchView.updateBackProgress(backEvent)
-                }
-
                 override fun handleOnBackPressed() {
                     searchView.handleBackInvoked()
                 }
 
                 override fun handleOnBackCancelled() {
                     searchView.cancelBackProgress()
+                }
+
+                override fun handleOnBackProgressed(backEvent: BackEventCompat) {
+                    searchView.updateBackProgress(backEvent)
                 }
             }.also {
                 searchView.addTransitionListener { searchView, _, newState ->
@@ -375,6 +375,11 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                 R.id.libraryFragment -> {
                     viewPager2.currentItem = 1
                     true
+                }
+
+                R.id.equalizerFragment -> {
+                    findNavController().navigateSafe(R.id.action_mainFragment_to_fragment_equalizer)
+                    false
                 }
 
                 else -> false

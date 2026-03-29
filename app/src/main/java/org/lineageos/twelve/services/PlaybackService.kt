@@ -7,8 +7,13 @@ package org.lineageos.twelve.services
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.SharedPreferences
+import android.content.pm.ApplicationInfo
 import android.content.res.Resources
 import android.media.audiofx.AudioEffect
+import android.media.audiofx.BassBoost
+import android.media.audiofx.Equalizer
+import android.media.audiofx.Virtualizer
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
@@ -200,6 +205,21 @@ class PlaybackService : MediaLibraryService(), LifecycleOwner {
 
     private val outputConfigurationRepository by lazy {
         (application as TwelveApplication).outputConfigurationRepository
+    }
+
+    private var equalizer: Equalizer? = null
+    private var bassBoost: BassBoost? = null
+    private var virtualizer: Virtualizer? = null
+    private var currentEffectsAudioSessionId: Int = 0
+
+    private val isPreinstalled by lazy {
+        (applicationInfo.flags and (ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
+    }
+
+    private val preferenceListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key != null && (key.startsWith("equalizer_") || key == "bass_boost_strength" || key == "virtualizer_strength")) {
+            applyAudioEffects()
+        }
     }
 
     private val analyticsListener by lazy {
@@ -476,6 +496,8 @@ class PlaybackService : MediaLibraryService(), LifecycleOwner {
 
         player.addAnalyticsListener(analyticsListener)
 
+        sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceListener)
+
         lifecycleScope.launch {
             player.listen { events ->
                 // Update startIndex and startPositionMs in resumption playlist.
@@ -520,6 +542,7 @@ class PlaybackService : MediaLibraryService(), LifecycleOwner {
 
                 if (events.contains(Player.EVENT_AUDIO_SESSION_ID)) {
                     openAudioEffectSession()
+                    applyAudioEffects()
                 }
             }
         }
@@ -571,6 +594,11 @@ class PlaybackService : MediaLibraryService(), LifecycleOwner {
 
         closeAudioEffectSession()
 
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceListener)
+        equalizer?.release()
+        bassBoost?.release()
+        virtualizer?.release()
+
         player.removeAnalyticsListener(analyticsListener)
 
         player.release()
@@ -580,6 +608,79 @@ class PlaybackService : MediaLibraryService(), LifecycleOwner {
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaLibrarySession
+
+    private fun applyAudioEffects() {
+        val sessionId = if (isPreinstalled) 0 else player.audioSessionId
+        
+        if (sessionId != 0 && (sessionId <= 0 || sessionId == AudioEffect.ERROR_BAD_VALUE)) {
+            return
+        }
+
+        val enabled = sharedPreferences.getBoolean("equalizer_enabled", false)
+
+        if (equalizer == null || currentEffectsAudioSessionId != sessionId) {
+            equalizer?.release()
+            try {
+                equalizer = Equalizer(0, sessionId)
+                currentEffectsAudioSessionId = sessionId
+            } catch (e: Exception) {
+                equalizer = null
+            }
+        }
+
+        try {
+            equalizer?.apply {
+                this.enabled = enabled
+                if (enabled) {
+                    val preset = sharedPreferences.getInt("equalizer_preset", -1)
+                    if (preset >= 0 && preset < numberOfPresets) {
+                        usePreset(preset.toShort())
+                    } else {
+                        for (i in 0 until numberOfBands) {
+                            val level = sharedPreferences.getInt("equalizer_band_level_$i", 0)
+                            setBandLevel(i.toShort(), level.toShort())
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Failed to apply equalizer settings", e)
+        }
+
+        if (bassBoost == null || currentEffectsAudioSessionId != sessionId) {
+            bassBoost?.release()
+            try {
+                bassBoost = BassBoost(0, sessionId)
+            } catch (e: Exception) {
+                bassBoost = null
+            }
+        }
+        try {
+            bassBoost?.apply {
+                this.enabled = enabled
+                setStrength(sharedPreferences.getInt("bass_boost_strength", 0).toShort())
+            }
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Failed to apply bass boost settings", e)
+        }
+
+        if (virtualizer == null || currentEffectsAudioSessionId != sessionId) {
+            virtualizer?.release()
+            try {
+                virtualizer = Virtualizer(0, sessionId)
+            } catch (e: Exception) {
+                virtualizer = null
+            }
+        }
+        try {
+            virtualizer?.apply {
+                this.enabled = enabled
+                setStrength(sharedPreferences.getInt("virtualizer_strength", 0).toShort())
+            }
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Failed to apply virtualizer settings", e)
+        }
+    }
 
     private fun openAudioEffectSession() {
         Intent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION).apply {

@@ -7,6 +7,7 @@ package org.lineageos.twelve
 
 import android.app.Application
 import androidx.media3.common.util.UnstableApi
+import androidx.preference.PreferenceManager
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -37,6 +38,16 @@ class TwelveApplication : Application(), SingletonImageLoader.Factory {
 
         // Observe dynamic colors changes
         DynamicColors.applyToActivitiesIfAvailable(this)
+
+        // Set default values for preferences
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        if (!sharedPreferences.contains(PREF_FIRST_RUN)) {
+            sharedPreferences.edit()
+                .putBoolean(PREF_FIRST_RUN, false)
+                .putBoolean(PREF_EQ_ENABLED, true)
+                .putInt(PREF_EQ_PRESET, 0) // Assuming 0 is the "Normal" preset
+                .apply()
+        }
     }
 
     override fun newImageLoader(context: PlatformContext) = ImageLoader.Builder(this)
@@ -44,4 +55,10 @@ class TwelveApplication : Application(), SingletonImageLoader.Factory {
             add(ThumbnailMapper)
         }
         .build()
+
+    companion object {
+        private const val PREF_FIRST_RUN = "first_run"
+        private const val PREF_EQ_ENABLED = "equalizer_enabled"
+        private const val PREF_EQ_PRESET = "equalizer_preset"
+    }
 }
